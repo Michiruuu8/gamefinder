@@ -1,19 +1,23 @@
 import {useState, useEffect} from "react";
 import { searchGames, getGenres, getPlatforms } from "../services/api";
+import {useFavorites } from "../hooks/useFavorites";
 import GameCard from "../components/GameCard";
 import "../App.css";
+import { Link } from "react-router-dom";
 
 function SearchPage() {
   const [query, setQuery] = useState("");
   const [games, setGames] = useState([]);
   const [status, setStatus] = useState("idle");
 
-    const [genres, setGenres] = useState([]);
-    const [platforms, setPlatforms] = useState([]);
-    const [selectedGenre, setSelectedGenre] = useState("");
-    const [selectedPlatform, setSelectedPlatform] = useState(""); 
+  const [genres, setGenres] = useState([]);
+  const [platforms, setPlatforms] = useState([]);
+  const [selectedGenre, setSelectedGenre] = useState("");
+  const [selectedPlatform, setSelectedPlatform] = useState(""); 
 
-    useEffect(() =>{
+  const {favorites, isFavorite, toggleFavorite} = useFavorites();
+
+  useEffect(() =>{
     const loadFilters = async () => {
       const genresData = await  getGenres();
       const platformsData = await getPlatforms();
@@ -43,6 +47,7 @@ function SearchPage() {
   return (
     <div className="app">
       <h1>Game Finder</h1>
+      <Link to="/favorites">Go to Favorites</Link>
       <form onSubmit={handleSearch}>
         <input
           type="text"
@@ -80,7 +85,13 @@ function SearchPage() {
       {status === "success" && (
         <div className="game-grid">
           {games.map((game) => (
-            <GameCard key={game.id} game={game} />
+            <GameCard 
+              key={game.id} 
+              game={game}
+              isFavorite={isFavorite(game.id)
+              }
+              onToggleFavorite={() => toggleFavorite(game)}
+            />
           ))}
         </div>
       )}
