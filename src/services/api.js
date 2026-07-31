@@ -3,7 +3,7 @@ import axios from "axios";
 const BASE_URL = "https://api.rawg.io/api";
 const API_KEY = import.meta.env.VITE_RAWG_API_KEY;
 
-export const searchGames = async (query, genre = "", platform = "") => {
+export const searchGames = async (query, genre = "", platform = "", page = 1) => {
     try{
         const response = await axios.get(`${BASE_URL}/games`,{
             params: {
@@ -13,9 +13,13 @@ export const searchGames = async (query, genre = "", platform = "") => {
                 genres: genre || undefined,
                 platforms: platform || undefined,
                 page_size: 12,
+                page: page,
             },
         });
-        return response.data.results;
+        return {
+        results: response.data.results,
+        hasMore: response.data.next !== null,
+        };
     } catch(error){
         console.error("Error searching games: ", error);
         throw error;

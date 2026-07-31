@@ -1,99 +1,84 @@
-import {useState, useEffect} from "react";
-import { searchGames, getGenres, getPlatforms } from "../services/api";
-import {useFavorites } from "../hooks/useFavorites";
+import { useFavorites } from "../hooks/useFavorites";
+import { useSearchContext } from "../context/SearchContext";
 import GameCard from "../components/GameCard";
+import SkeletonCard from "../components/SkeletonCard";
 import "../App.css";
 import { Link } from "react-router-dom";
 
 function SearchPage() {
-  const [query, setQuery] = useState("");
-  const [games, setGames] = useState([]);
-  const [status, setStatus] = useState("idle");
+  const {
+    query, setQuery, games, status, genres, platforms,
+    selectedGenre, setSelectedGenre, selectedPlatform, setSelectedPlatform,
+    hasMore, handleSearch, handleLoadMore,
+  } = useSearchContext();
 
-  const [genres, setGenres] = useState([]);
-  const [platforms, setPlatforms] = useState([]);
-  const [selectedGenre, setSelectedGenre] = useState("");
-  const [selectedPlatform, setSelectedPlatform] = useState(""); 
-
-  const {favorites, isFavorite, toggleFavorite} = useFavorites();
-
-  useEffect(() =>{
-    const loadFilters = async () => {
-      const genresData = await  getGenres();
-      const platformsData = await getPlatforms();
-      setGenres(genresData);
-      setPlatforms(platformsData);
-    };
-    loadFilters();
-  }, []);
-
-    const handleSearch = async (e) => {
-    e.preventDefault();
-
-    if (!query.trim() && !selectedGenre && !selectedPlatform) return;
-
-    setStatus("loading");
-
-    try{
-      const results = await searchGames(query, selectedGenre, selectedPlatform);
-      setGames(results);
-      setStatus("success");
-    } catch (error) {
-      setGames([]);
-      setStatus("error");
-    }
-  };
+  const { isFavorite, toggleFavorite } = useFavorites();
 
   return (
     <div className="app">
-      <h1>Game Finder</h1>
-      <Link to="/favorites">Go to Favorites</Link>
-      <form onSubmit={handleSearch}>
-        <input
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search for a game..."
-        />
-        <button type="submit">Search</button>
+      <header className="site-header">
+        <p className="site-header__eyebrow">// game discovery tool</p>
+        <h1>Game<span>Finder</span></h1>
+        <nav className="site-nav">
+          <Link to="/favorites">→ Go to Favorites</Link>
+        </nav>
+      </header>
 
-        <select value={selectedGenre} onChange={(e)=> setSelectedGenre(e.target.value)}>
+      <form onSubmit={handleSearch} className="search-console">
+        <div className="search-console__input-wrap">
+          <span className="search-console__prompt">&gt;</span>
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search for a game..."
+          />
+        </div>
+        <select value={selectedGenre} onChange={(e) => setSelectedGenre(e.target.value)}>
           <option value="">All the genres</option>
           {genres.map((genre) => (
-            <option key={genre.id} value={genre.slug}>
-              {genre.name}
-            </option>
+            <option key={genre.id} value={genre.slug}>{genre.name}</option>
           ))}
         </select>
-
         <select value={selectedPlatform} onChange={(e) => setSelectedPlatform(e.target.value)}>
           <option value="">All the platforms</option>
-          {platforms.map((platforms) => (
-            <option key={platforms.id} value={platforms.id}>
-              {platforms.name}
-            </option>
+          {platforms.map((platform) => (
+            <option key={platform.id} value={platform.id}>{platform.name}</option>
           ))}
         </select>
-
+        <button type="submit" className="btn-primary">Search</button>
       </form>
 
-      {status === "loading" && <p>Loading results...</p>}
-      {status === "error" && (
-        <p>An error occurred while searching. Please try again. </p>
+      {status === "loading" && (
+        <div className="game-grid">
+          {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
+        </div>
       )}
 
-      {status === "success" && (
+      {status === "error" && (
+        <p className="state-message state-message--error">⚠ Something went wrong. Try again.</p>
+      )}
+
+      {status === "success" && games.length === 0 && (
+        <p className="state-message">◌ No games matched your search.</p>
+      )}
+
+      {status === "success" && games.length > 0 && (
         <div className="game-grid">
-          {games.map((game) => (
-            <GameCard 
-              key={game.id} 
+          {games.map((game, index) => (
+            <GameCard
+              key={game.id}
               game={game}
-              isFavorite={isFavorite(game.id)
-              }
+              isFavorite={isFavorite(game.id)}
               onToggleFavorite={() => toggleFavorite(game)}
+              style={{ animationDelay: `${index * 40}ms` }}
             />
           ))}
         </div>
+      )}
+
+      {status === "success" && hasMore && (
+        <button onClick={handleLoadMore} className="btn-secondary">Load more</button>
       )}
     </div>
   );
