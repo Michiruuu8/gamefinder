@@ -1,30 +1,32 @@
-import {useFavorites} from "../hooks/useFavorites";
+import { useFavorites } from "../hooks/useFavorites";
 import GameCard from "../components/GameCard";
-import {Link} from "react-router-dom";
+import SiteNav from "../components/SiteNav";
 
 function FavoritesPage() {
-    const {favorites, isFavorite, toggleFavorite} = useFavorites();
+  const { favorites, isFavorite, toggleFavorite } = useFavorites();
 
-    return (
-        <div className="app">
-            <h1>Favorites</h1>
-            <Link to="/"> ← Return to Search</Link>
-            {favorites.length === 0 ? (
-                <p>You have no favorite games yet.</p>
-            ) : (
-                <div className="game-grid">
-                    {favorites.map((game) => (
-                        <GameCard
-                            key={game.id}
-                            game={game}
-                            isFavorite={isFavorite(game.id)}
-                            onToggleFavorite={() => toggleFavorite(game)}
-                        />
-                    ))}
-                </div>
-            )}
+  return (
+    <div className="app">
+      <SiteNav />
+      <h1 className="page-title">My Favorites</h1>
+
+      {favorites.length === 0 ? (
+        <p className="state-message">◌ You haven't saved any games yet.</p>
+      ) : (
+        <div className="game-grid">
+          {favorites.map((game, index) => (
+            <GameCard
+              key={game.id}
+              game={game}
+              index={index}
+              isFavorite={isFavorite(game.id)}
+              onToggleFavorite={() => toggleFavorite(game)}
+            />
+          ))}
         </div>
-    );
+      )}
+    </div>
+  );
 }
 
 export default FavoritesPage;
