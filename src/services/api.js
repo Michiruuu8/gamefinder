@@ -26,6 +26,26 @@ export const searchGames = async (query, genre = "", platform = "", page = 1) =>
     }
 };
 
+export const getPopularGames = async (page = 1) => {
+    try{
+        const response = await axios.get(`${BASE_URL}/games`,{
+            params: {
+                key: API_KEY,
+                ordering: "-rating",
+                page_size: 12,
+                page: page,
+            },
+        });
+        return {
+            results: response.data.results,
+            hasMore: response.data.next !== null,
+        };
+    } catch(error){
+        console.error("Error fetching popular games: ", error);
+        throw error;
+    }
+};
+
 export const getGenres = async () => {
     const response = await axios.get(`${BASE_URL}/genres`,{
         params: {key: API_KEY},

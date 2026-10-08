@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from "react";
-import { searchGames, getGenres, getPlatforms } from "../services/api";
+import { searchGames, getGenres, getPlatforms, getPopularGames } from "../services/api";
 
 const SearchContext = createContext(null);
 
@@ -22,6 +22,21 @@ export function SearchProvider({ children }) {
       setPlatforms(platformsData);
     };
     loadFilters();
+  }, []);
+
+  useEffect(() => {
+    const loadPopularGames = async () => {
+      setStatus("loading");
+      try {
+        const { results, hasMore } = await getPopularGames(1);
+        setGames(results);
+        setHasMore(hasMore);
+        setStatus("success");
+      } catch (error) {
+        setStatus("error");
+      }
+    };
+    loadPopularGames();
   }, []);
 
   const handleSearch = async (e) => {
