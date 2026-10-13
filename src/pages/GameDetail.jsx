@@ -1,82 +1,167 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { getGameDetails } from "../services/api";
+import { getGameDetails, getGameScreenshots } from "../services/api";
 import { useFavorites } from "../hooks/useFavorites";
-import SiteNav from "../components/SiteNav";
+import ScrollNav from "../components/ScrollNav";
+import FlexCarousel from "../components/FlexCarousel";
+import { shortenDescription } from "../lib/shortDescription";
+
+const CARD_HEIGHT = 0.3;
 
 function GameDetail() {
   const { id } = useParams();
   const [game, setGame] = useState(null);
+  const [screenshots, setScreenshots] = useState([]);
   const [status, setStatus] = useState("loading");
   const { isFavorite, toggleFavorite } = useFavorites();
 
   useEffect(() => {
+    let cancelled = false;
+
     const loadGame = async () => {
       setStatus("loading");
+      setScreenshots([]);
+
       try {
         const data = await getGameDetails(id);
+        if (cancelled) return;
         setGame(data);
         setStatus("success");
       } catch (error) {
-        setStatus("error");
+        if (!cancelled) setStatus("error");
+        return;
+      }
+
+      // Las capturas se piden aparte: si fallan, la página igual se muestra completa
+      try {
+        const shots = await getGameScreenshots(id);
+        if (!cancelled) setScreenshots(shots);
+      } catch (error) {
+        if (!cancelled) setScreenshots([]);
       }
     };
+
     loadGame();
+    return () => {
+      cancelled = true;
+    };
   }, [id]);
 
-  return (
-    <div className="app">
-      <SiteNav />
+  const platforms = game?.platforms?.map((p) => p.platform) ?? [];
+  const stores = game?.stores?.filter((s) => s.store) ?? [];
 
-      {status === "loading" && <p className="state-message">Loading game...</p>}
+  const carouselItems = screenshots.map((shot, index) => ({
+    src: shot.image,
+    alt: `${game?.name} screenshot ${index + 1}`,
+  }));
+
+  return (
+    <div className="detail-page">
+      <ScrollNav alwaysVisible />
+
+      {status === "loading" && <p className="state-message detail-state">Loading game...</p>}
       {status === "error" && (
-        <p className="state-message state-message--error">⚠ We couldn't load this game.</p>
+        <p className="state-message state-message--error detail-state">⚠ We couldn't load this game.</p>
       )}
 
-      {status === "success" && (
-        <article className="game-detail">
-          <Link to="/" className="game-detail__back">← Back to search</Link>
+      {status === "success" && game && (
+        <article>
+          <div className="detail-topbar">
+            <Link to="/" className="detail-back">← Back to search</Link>
+          </div>
 
-          <div className="game-detail__layout">
-            <div>
-              <img className="game-detail__hero" src={game.background_image} alt={game.name} />
-              <div className="game-detail__facts">
-                {game.released && (
-                  <p className="game-detail__fact">Released: <strong>{game.released}</strong></p>
-                )}
-                {game.metacritic && (
-                  <p className="game-detail__fact">Metacritic: <strong>{game.metacritic}</strong></p>
-                )}
+          <header className="detail-header">
+            <button
+              className={`favorite-btn ${isFavorite(game.id) ? "favorite-btn--active" : ""}`}
+              onClick={() => toggleFavorite(game)}
+            >
+              {isFavorite(game.id) ? "Saved" : "Save to favorites"}
+            </button>
+
+            <h1 className="detail-title">{game.name}</h1>
+
+            {game.released && <p className="detail-released">Released: {game.released}</p>}
+
+            {game.description && (
+              <div className="detail-description">
+                <p>{shortenDescription(game.description)}</p>
               </div>
-              <button
-                className={`favorite-btn ${isFavorite(game.id) ? "favorite-btn--active" : ""}`}
-                style={{ marginTop: "1rem" }}
-                onClick={() => toggleFavorite(game)}
-              >
-                {isFavorite(game.id) ? "♥ Saved" : "♡ Save to favorites"}
-              </button>
-            </div>
+            )}
 
-            <div className="game-detail__info">
-              <h1>{game.name}</h1>
-              <p className="game-detail__rating">⭐ {game.rating}</p>
-
-              {game.genres?.length > 0 && (
-                <ul className="game-detail__tags">
-                  {game.genres.map((g) => <li key={g.id}>{g.name}</li>)}
+            {platforms.length > 0 && (
+              <>
+                <h2 className="detail-heading">Platforms</h2>
+                <ul className="detail-pills">
+                  {platforms.map((p) => (
+                    <li key={p.id}>{p.name}</li>
+                  ))}
                 </ul>
-              )}
+              </>
+            )}
+          </header>
 
-              <p className="game-detail__description" dangerouslySetInnerHTML={{ __html: game.description_raw }} />
+          {carouselItems.length > 0 && (
+            <section
+              className="detail-carousel"
+              aria-label="Screenshots"
+              style={{ "--card": CARD_HEIGHT }}
+            >
+              <FlexCarousel
+                items={carouselItems}
+                preset="liquid"
+                intro="rise"
+                cardHeight={CARD_HEIGHT}
+                gap={12}
+                squeeze={0.2}
+                focusOnClick
+                captions
+                fit="natural"
+                radius={0}
+                lensWidth={0.74}
+                lensHeight={1.18}
+                tilt={62}
+                roundness={1}
+                bend={0.34}
+                reach={0.38}
+                curl="twist"
+                dispersion={0.45}
+                liquid={0}
+                followCursor={false}
+                autoplay={false}
+                interval={4}
+                captureWheel
+              />
+            </section>
+          )}
 
-              <h3>Platforms</h3>
-              <ul className="game-detail__tags">
-                {game.platforms?.map((p) => (
-                  <li key={p.platform.id}>{p.platform.name}</li>
+          {stores.length > 0 && (
+            <section className="detail-stores">
+              <h2 className="detail-heading">Where to buy?</h2>
+              <ul className="detail-store-list">
+                {stores.map((s) => (
+                  <li key={s.store.id}>
+                    <a
+                      href={s.url || (s.store.domain ? `https://${s.store.domain}` : "#")}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="detail-store"
+                      title={s.store.name}
+                      aria-label={`Buy on ${s.store.name}`}
+                    >
+                      {s.store.domain ? (
+                        <img
+                          src={`https://www.google.com/s2/favicons?domain=${s.store.domain}&sz=64`}
+                          alt={s.store.name}
+                        />
+                      ) : (
+                        <span>{s.store.name}</span>
+                      )}
+                    </a>
+                  </li>
                 ))}
               </ul>
-            </div>
-          </div>
+            </section>
+          )}
         </article>
       )}
     </div>

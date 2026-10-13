@@ -72,3 +72,16 @@ export const getGameDetails = async (id) => {
         throw error;
     }
 };
+
+export const getGameScreenshots = async (id) => {
+    try{
+        const response = await axios.get(`${BASE_URL}/games/${id}/screenshots`,{
+            params: {key: API_KEY, page_size: 12},
+        });
+        return response.data.results;
+    }
+    catch(error){
+        console.error("Error fetching game screenshots: ", error);
+        throw error;
+    }
+};
