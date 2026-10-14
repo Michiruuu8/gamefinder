@@ -1094,3 +1094,28 @@ a:focus-visible {
     --per: 1.2;
   }
 }
+
+/* ---------- Footer (crédito a RAWG) ---------- */
+
+.site-footer {
+  position: relative;
+  z-index: 2; /* por encima del lienzo del carrusel para que el enlace sea clicable */
+  padding: 3rem 1.5rem 0;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.site-footer p {
+  margin: 0;
+}
+
+.site-footer a {
+  color: var(--text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.site-footer a:hover {
+  color: var(--accent);
+}

@@ -8,7 +8,7 @@ import ScrollNav from "../components/ScrollNav";
 import { motion } from "framer-motion";
 import MagneticButton from "../components/MagneticButton";
 import PixelSwap from "../components/PixelSwap";
-import InteractiveText from "../components/InteractiveText";
+import Footer from "../components/Footer";
 
 function SearchPage() {
   const {
@@ -146,6 +146,8 @@ function SearchPage() {
             Load more
           </MagneticButton>
         )}
+
+        <Footer />
       </main>
     </>
   );

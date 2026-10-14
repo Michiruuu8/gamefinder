@@ -2,6 +2,7 @@ import { useRef, useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { useFavorites } from "../hooks/useFavorites";
 import ScrollNav from "../components/ScrollNav";
+import Footer from "../components/Footer";
 
 function FavoritesPage() {
   const { favorites, toggleFavorite } = useFavorites();
@@ -103,6 +104,8 @@ function FavoritesPage() {
           )}
         </section>
       )}
+
+      <Footer />
     </div>
   );
 }

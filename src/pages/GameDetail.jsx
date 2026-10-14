@@ -5,6 +5,7 @@ import { useFavorites } from "../hooks/useFavorites";
 import ScrollNav from "../components/ScrollNav";
 import FlexCarousel from "../components/FlexCarousel";
 import { shortenDescription } from "../lib/shortDescription";
+import Footer from "../components/Footer";
 
 const CARD_HEIGHT = 0.3;
 
@@ -164,6 +165,8 @@ function GameDetail() {
           )}
         </article>
       )}
+
+      <Footer />
     </div>
   );
 }
